@@ -117,6 +117,10 @@ def insert(Customer):
 
 insert(customer)
 
+# print(matcheddic)
+# for i in matcheddic:
+#     if i["credit_card_security_code"] =="099" or i["firstName"]== "Valerie":
+#         print(i)
 
 # dic_data = {}
 # key_list = []
@@ -128,4 +132,16 @@ insert(customer)
 # xml_keys = list(xml_data[0].keys())
 # key_list.extend(json_keys[3:])
 # key_list.extend(xml_keys[4:11])
-print("Data Save Successfully")
+# print("Data Save Successfully")
+# print("+====================================================CSV data=========================================================")
+# print(csv_dic_data)
+
+print("+====================================================json data=========================================================")
+print(matcheddic)
+
+# print("+====================================================xml data=========================================================")
+# print(xml_data)
+
+
+grand_data= []
+
