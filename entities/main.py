@@ -1,3 +1,5 @@
+from typing import List
+
 from pony.orm import *
 from customers import customers_entities
 from pony import orm
@@ -6,12 +8,14 @@ import csv
 import xml.etree.ElementTree as ET
 # creating database object and binding the object to sqlite database
 db = Database()
-db.bind(provider="sqlite", filename="databaseFile2.db", create_db=True)
+db.bind(provider="sqlite", filename="databaseFile5.db", create_db=True)
 customer = customers_entities(db, orm)
 db.generate_mapping(create_tables=True)
 # creating customer entity
 
 # paths to the 3 data files saved in variables
+all_data= []
+combined_csv_xml_data= []
 csv_fil_path = "../data/user_data_23_4.csv"
 json_file_path = "../data/user_data_23_4.json"
 xml_file_path = "../data/user_data_23_4.xml"
@@ -20,10 +24,10 @@ xml_file_path = "../data/user_data_23_4.xml"
 
 
 def read_csv(file_path):
-    with open(file_path, 'r') as csv_file:
-        csv_reader = csv.DictReader(csv_file)
-        data = [row for row in csv_file]
-    return data
+    with open(file_path, newline='') as csv_file:
+        data = csv.DictReader(csv_file)
+        data2 = [row for row in data]
+    return data2
 
 # function read xml file
 
@@ -55,68 +59,18 @@ xml_data = read_xml(xml_file_path)
 del xml_data[0]
 # calling the function that reads the csv data and save the data in a variable
 csv_data = read_csv(csv_fil_path)
-# cleaning up the csv data and convert the data into list of dictionaries
-keys = ['firstName', 'lastName', 'age', 'sex', 'Vehicle_make', 'Vehicle_model', 'Vehicle_year', 'Vehicle_type']
-csv_dic_data = []
-for data in (csv_data[1:]):
-    dt = data.split(',')
-    mydic = dict(zip(keys, dt))
-    csv_dic_data.append(mydic)
 
-matcheddic = []
-matchedCSV_XML = []
-# matching csv data with json file to fetch one  customer customers that exist in both files
-for dy in csv_dic_data:
-    for dx in json_data:
-        if dx['firstName'].title() == dy['firstName'].title() and dx['lastName'].title() == dy['lastName'].title():
-            matcheddic.append(dx)
-
-# # matching csv data with xml file to fetch one  customer customers that exist in both files
-
-for dy in csv_dic_data:
-    for dx in xml_data:
-        if dx['firstName'].title() == dy['firstName'].title() and dx['lastName'].title() == dy['lastName'].title():
-            matchedCSV_XML.append(dx)
 
 
 @db_session()
-def insert(Customer):
-    counting = 0
-    while counting < len(csv_dic_data):
-        Customer(
-                first_name=csv_dic_data[counting]['firstName'],
-                last_name=csv_dic_data[counting]['lastName'],
-                age=csv_dic_data[counting]['age'],
-                sex= csv_dic_data[counting]['sex'],
-                vehicle_make= csv_dic_data[counting]['Vehicle_make'],
-                vehicle_model= csv_dic_data[counting]['Vehicle_model'],
-                vehicle_year= csv_dic_data[counting]['Vehicle_year'],
-                vehicle_type=  csv_dic_data[counting]['Vehicle_type'],
-                iban= matcheddic[counting]['iban'],
-                credit_card_number=matcheddic[counting]['credit_card_number'],
-                credit_card_security_code=matcheddic[counting]['credit_card_security_code'],
-                credit_card_start_date=matcheddic[counting]['credit_card_start_date'],
-                credit_card_end_date=matcheddic[counting]['credit_card_end_date'],
-                address_main=matcheddic[counting]['address_main'],
-                address_city=matcheddic[counting]['address_city'],
-                address_postcode=matcheddic[counting]['address_postcode'],
-                retired=matchedCSV_XML[counting]['retired'],
-                dependants=matchedCSV_XML[counting]['retired'],
-                marital_status=matchedCSV_XML[counting]['retired'],
-                salary = matchedCSV_XML[counting]['salary'],
-                pension = matchedCSV_XML[counting]['pension'],
-                company = matchedCSV_XML[counting]['company'],
-                commute_distance = matchedCSV_XML[counting]['commute_distance'],
+def entity(Enty):
+    Enty(
+        name = 'ali',
+        age= 22,
+    )
+    return Enty
 
-
-               )
-        counting += 1
-
-    return Customer
-
-
-insert(customer)
-
+# entity(enty)
 # print(matcheddic)
 # for i in matcheddic:
 #     if i["credit_card_security_code"] =="099" or i["firstName"]== "Valerie":
@@ -133,15 +87,83 @@ insert(customer)
 # key_list.extend(json_keys[3:])
 # key_list.extend(xml_keys[4:11])
 # print("Data Save Successfully")
-# print("+====================================================CSV data=========================================================")
-# print(csv_dic_data)
 
-print("+====================================================json data=========================================================")
-print(matcheddic)
-
-# print("+====================================================xml data=========================================================")
-# print(xml_data)
+for i in csv_data:
+    for j in xml_data:
+        if i['firstName']== j['firstName'] and i['lastName']== j['lastName'] and i['age']== j['age']:
+            dt = i | j
+            combined_csv_xml_data.append(dt)
 
 
-grand_data= []
+
+for k in combined_csv_xml_data:
+    for l in json_data:
+        if k['firstName']== l['firstName'] and k['lastName']== l['lastName'] and int(k['age'])== l['age']:
+            dt =k | l
+            all_data.append(dt)
+
+
+
+
+
+
+
+def write_all(file):
+    with open(file, 'w', newline='') as csv_out_put:
+        fieldnames= list(all_data[0].keys())
+        fieldnames.append('debt')
+        writer = csv.DictWriter(csv_out_put, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(all_data)
+
+write_all("all_data.csv")
+
+print(all_data[0].keys())
+
+
+
+
+
+
+dataFromCombineFormat=read_csv('all_data.csv')
+
+print(dataFromCombineFormat[0].keys())
+
+
+@db_session()
+def insert(Customer):
+    for i in dataFromCombineFormat:
+        if i['firstName']== 'Valerie' and i['lastName']== 'Ellis':
+            i['credit_card_security_code']='762'
+        Customer(
+                 first_name=i['firstName'],
+                last_name=i['lastName'],
+                age= int(i['age']),
+                 sex= i['sex'],
+                vehicle_make= i['vehicle_Make'],
+                vehicle_model= i['vehicle_Model'],
+                vehicle_year= i['vehicle_Year'],
+                vehicle_type=  i['vehicle_Type'],
+                retired=i['retired'],
+                dependants=i['dependants'],
+                marital_status=i['marital_status'],
+                salary=i['salary'],
+                pension=i['pension'],
+                company=i['company'],
+                commute_distance=i['commute_distance'],
+                address_postcode= i['address_postcode'],
+                iban= i['iban'],
+                credit_card_number=i['credit_card_number'],
+                credit_card_security_code=i['credit_card_security_code'],
+                credit_card_start_date=i['credit_card_start_date'],
+                credit_card_end_date=i['credit_card_end_date'],
+                address_main=i['address_main'],
+                address_city=i['address_city'],
+                debt=i['debt'],
+                )
+    print('done')
+    return Customer
+
+
+insert(customer)
 
